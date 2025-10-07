@@ -32,7 +32,7 @@ def add_order(update: Update, context: CallbackContext) -> None:
         update.message.reply_text(
             'Ошибка в формате ввода. Используйте: '
             '/add Клиент, Услуга, Срок_исполнения, Бюджет\n'
-            'Пример: /add ООО Рога и копыта, Бизнес-консалтинг, 2024-12-31, 50000'
+            'Пример: /add ООО Рога и копыта, Бизнес-консалтинг, 2025-10-10, 50000'
         )
         return
     
@@ -59,7 +59,7 @@ def update_order(update: Update, context: CallbackContext) -> None:
         update.message.reply_text(
             'Ошибка в формате ввода. Используйте: '
             '/update номер_заказа, поле, значение\n'
-            'Пример: /update 12345, срок_исполнения, 2024-11-30'
+            'Пример: /update 12345, срок_исполнения, 2024-09-10'
         )
         return
     
@@ -199,7 +199,7 @@ def load_from_csv():
 def main() -> None:
     load_from_csv()
     
-    updater = Updater("YOUR_BOT_TOKEN_HERE", use_context=True)
+    updater = Updater("8306340829:AAGwRxU6hFRbvhVV5tz9HNr92eXrT-W8zDI", use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
