@@ -9,6 +9,7 @@ csv_file_path = "orders.csv"
 dashboard_url = "http://127.0.0.1:8050/"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    dashboard_url = "http://127.0.0.1:8050/"
     await update.message.reply_text(
         'Привет! Я бот управления заказами консалтинговой компании. '
         'Используй команды:\n'
