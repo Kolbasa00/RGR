@@ -1,15 +1,15 @@
 import csv
+import asyncio
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Словарь для хранения информации о заказах
 orders = {}
-
 csv_file_path = "orders.csv"
 dashboard_url = "http://127.0.0.1:8050/"
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(
         'Привет! Я бот управления заказами консалтинговой компании. '
         'Используй команды:\n'
         '/add - добавить новый заказ\n'
@@ -22,17 +22,16 @@ def start(update: Update, context: CallbackContext) -> None:
         '/dashboard - аналитический дашборд'
     )
 
-def add_order(update: Update, context: CallbackContext) -> None:
-    message_text = update.message.text.split(maxsplit=1)[1]
-    
+async def add_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
+        message_text = update.message.text.split(maxsplit=1)[1]
         client, service, deadline, budget = message_text.split(',')
         budget = float(budget)
-    except ValueError:
-        update.message.reply_text(
+    except (ValueError, IndexError):
+        await update.message.reply_text(
             'Ошибка в формате ввода. Используйте: '
             '/add Клиент, Услуга, Срок_исполнения, Бюджет\n'
-            'Пример: /add ООО Рога и копыта, Бизнес-консалтинг, 2025-10-10, 50000'
+            'Пример: /add ООО Рога и копыта, Бизнес-консалтинг, 2024-10-10, 50000'
         )
         return
     
@@ -46,17 +45,16 @@ def add_order(update: Update, context: CallbackContext) -> None:
         'manager': 'Не назначен'
     }
     
-    update.message.reply_text(f'Заказ №{order_id} успешно создан!')
+    await update.message.reply_text(f'Заказ №{order_id} успешно создан!')
     save_to_csv()
 
-def update_order(update: Update, context: CallbackContext) -> None:
-    message_text = update.message.text.split(maxsplit=1)[1]
-    
+async def update_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
+        message_text = update.message.text.split(maxsplit=1)[1]
         order_id_str, field, value = message_text.split(',', 2)
         order_id = int(order_id_str)
-    except ValueError:
-        update.message.reply_text(
+    except (ValueError, IndexError):
+        await update.message.reply_text(
             'Ошибка в формате ввода. Используйте: '
             '/update номер_заказа, поле, значение\n'
             'Пример: /update 12345, срок_исполнения, 2024-09-10'
@@ -66,28 +64,28 @@ def update_order(update: Update, context: CallbackContext) -> None:
     if order_id in orders:
         if field.strip() in orders[order_id]:
             orders[order_id][field.strip()] = value.strip()
-            update.message.reply_text(f'Заказ №{order_id} успешно обновлен!')
+            await update.message.reply_text(f'Заказ №{order_id} успешно обновлен!')
             save_to_csv()
         else:
-            update.message.reply_text('Указанное поле не существует')
+            await update.message.reply_text('Указанное поле не существует')
     else:
-        update.message.reply_text(f'Заказ №{order_id} не найден')
+        await update.message.reply_text(f'Заказ №{order_id} не найден')
 
-def delete_order(update: Update, context: CallbackContext) -> None:
+async def delete_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         order_id = int(update.message.text.split(maxsplit=1)[1])
-    except ValueError:
-        update.message.reply_text('Используйте: /delete номер_заказа')
+    except (ValueError, IndexError):
+        await update.message.reply_text('Используйте: /delete номер_заказа')
         return
     
     if order_id in orders:
         del orders[order_id]
-        update.message.reply_text(f'Заказ №{order_id} удален!')
+        await update.message.reply_text(f'Заказ №{order_id} удален!')
         save_to_csv()
     else:
-        update.message.reply_text(f'Заказ №{order_id} не найден')
+        await update.message.reply_text(f'Заказ №{order_id} не найден')
 
-def list_orders(update: Update, context: CallbackContext) -> None:
+async def list_orders(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if orders:
         orders_list = []
         for order_id, order_info in orders.items():
@@ -95,15 +93,15 @@ def list_orders(update: Update, context: CallbackContext) -> None:
                 f"№{order_id}: {order_info['client']} - {order_info['service']} "
                 f"({order_info['status']})"
             )
-        update.message.reply_text('Список заказов:\n' + '\n'.join(orders_list))
+        await update.message.reply_text('Список заказов:\n' + '\n'.join(orders_list))
     else:
-        update.message.reply_text('Заказов нет')
+        await update.message.reply_text('Заказов нет')
 
-def order_info(update: Update, context: CallbackContext) -> None:
+async def order_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         order_id = int(update.message.text.split(maxsplit=1)[1])
-    except ValueError:
-        update.message.reply_text('Используйте: /info номер_заказа')
+    except (ValueError, IndexError):
+        await update.message.reply_text('Используйте: /info номер_заказа')
         return
     
     if order_id in orders:
@@ -117,18 +115,17 @@ def order_info(update: Update, context: CallbackContext) -> None:
             f"Статус: {order['status']}\n"
             f"Менеджер: {order['manager']}"
         )
-        update.message.reply_text(info_text)
+        await update.message.reply_text(info_text)
     else:
-        update.message.reply_text(f'Заказ №{order_id} не найден')
+        await update.message.reply_text(f'Заказ №{order_id} не найден')
 
-def change_status(update: Update, context: CallbackContext) -> None:
-    message_text = update.message.text.split(maxsplit=1)[1]
-    
+async def change_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
+        message_text = update.message.text.split(maxsplit=1)[1]
         order_id_str, new_status = message_text.split(',', 1)
         order_id = int(order_id_str)
-    except ValueError:
-        update.message.reply_text(
+    except (ValueError, IndexError):
+        await update.message.reply_text(
             'Используйте: /status номер_заказа, новый_статус\n'
             'Пример: /status 12345, В работе'
         )
@@ -136,19 +133,18 @@ def change_status(update: Update, context: CallbackContext) -> None:
     
     if order_id in orders:
         orders[order_id]['status'] = new_status.strip()
-        update.message.reply_text(f'Статус заказа №{order_id} изменен на "{new_status}"')
+        await update.message.reply_text(f'Статус заказа №{order_id} изменен на "{new_status}"')
         save_to_csv()
     else:
-        update.message.reply_text(f'Заказ №{order_id} не найден')
+        await update.message.reply_text(f'Заказ №{order_id} не найден')
 
-def assign_manager(update: Update, context: CallbackContext) -> None:
-    message_text = update.message.text.split(maxsplit=1)[1]
-    
+async def assign_manager(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
+        message_text = update.message.text.split(maxsplit=1)[1]
         order_id_str, manager = message_text.split(',', 1)
         order_id = int(order_id_str)
-    except ValueError:
-        update.message.reply_text(
+    except (ValueError, IndexError):
+        await update.message.reply_text(
             'Используйте: /manager номер_заказа, ФИО_менеджера\n'
             'Пример: /manager 12345, Иванов И.И.'
         )
@@ -156,13 +152,13 @@ def assign_manager(update: Update, context: CallbackContext) -> None:
     
     if order_id in orders:
         orders[order_id]['manager'] = manager.strip()
-        update.message.reply_text(f'На заказ №{order_id} назначен менеджер: {manager}')
+        await update.message.reply_text(f'На заказ №{order_id} назначен менеджер: {manager}')
         save_to_csv()
     else:
-        update.message.reply_text(f'Заказ №{order_id} не найден')
+        await update.message.reply_text(f'Заказ №{order_id} не найден')
 
-def dashboard(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(f'Аналитический дашборд: {dashboard_url}')
+async def dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(f'Аналитический дашборд: {dashboard_url}')
 
 def save_to_csv():
     with open(csv_file_path, mode='w', newline='', encoding='utf-8') as file:
@@ -199,22 +195,21 @@ def load_from_csv():
 def main() -> None:
     load_from_csv()
     
-    updater = Updater("8306340829:AAGwRxU6hFRbvhVV5tz9HNr92eXrT-W8zDI", use_context=True)
-    dp = updater.dispatcher
+    application = Application.builder().token("8306340829:AAGwRxU6hFRbvhVV5tz9HNr92eXrT-W8zDI").build()
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("add", add_order))
-    dp.add_handler(CommandHandler("update", update_order))
-    dp.add_handler(CommandHandler("delete", delete_order))
-    dp.add_handler(CommandHandler("list", list_orders))
-    dp.add_handler(CommandHandler("info", order_info))
-    dp.add_handler(CommandHandler("status", change_status))
-    dp.add_handler(CommandHandler("manager", assign_manager))
-    dp.add_handler(CommandHandler("dashboard", dashboard))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("add", add_order))
+    application.add_handler(CommandHandler("update", update_order))
+    application.add_handler(CommandHandler("delete", delete_order))
+    application.add_handler(CommandHandler("list", list_orders))
+    application.add_handler(CommandHandler("info", order_info))
+    application.add_handler(CommandHandler("status", change_status))
+    application.add_handler(CommandHandler("manager", assign_manager))
+    application.add_handler(CommandHandler("dashboard", dashboard))
 
-    updater.start_polling()
     print("Бот управления заказами запущен. Ожидание обновлений...")
-    updater.idle()
+    
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
