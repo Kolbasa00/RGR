@@ -13,18 +13,17 @@
 - **CSV-база данных** для хранения информации о заказах
 - **Многопользовательский интерфейс** с разделением по менеджерам
 
-## Установка и запуск
 
 ### Предварительные требования
-- Python 3.8 или выше
+- Node.js 18 или выше
 - Активный Telegram-бот (создается через @BotFather)
 - Доступ к интернету
 
 ### Установка зависимостей
 ```bash
-pip install python-telegram-bot dash plotly pandas apscheduler
+npm install telegraf
 
-Запуск Telegram-бота: python bot.py
+Запуск Telegram-бота: node main.js
 
 Запуск дашборда аналитики ( в отдельном терминале): python dashboard.py
 
@@ -86,8 +85,7 @@ Manager - ответственный менеджер
 Фильтрация по менеджерам - возможность просматривать аналитику по конкретным менеджерам
 
 Технологический стек:
-Backend: Python 3.8+
-Telegram API: python-telegram-bot 21.0+
+Backend: Node.js 18+
+Telegram API: Telegraf.js
 Визуализация: Plotly, Dash
 Данные: Pandas, CSV
-Планировщик: APScheduler
